@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class GameCore : MonoBehaviour {
+public class GameCore : MonoBehaviour 
+{
 
     public UIAtlas mainResourceAtlas;
     public Element elementPrefab;
@@ -13,5 +14,4 @@ public class GameCore : MonoBehaviour {
     {
         instance = this;
 	}
-	
 }
