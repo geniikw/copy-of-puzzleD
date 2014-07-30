@@ -3,7 +3,7 @@ using System.Collections;
 
 public class GameCore : MonoBehaviour 
 {
-
+    
     public UIAtlas mainResourceAtlas;
     public Element elementPrefab;
 

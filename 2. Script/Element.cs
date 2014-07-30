@@ -3,8 +3,8 @@ using System.Collections;
 
 [RequireComponent(typeof(BoxCollider))]
 
-public class Element : UIDragDropItem{
-
+public class Element : UIDragDropItem{  
+    
     public enum elementType
     {
         fire,
@@ -14,22 +14,16 @@ public class Element : UIDragDropItem{
         dark,
         heart
     }
-
     //맴버 변수
     public elementType type;
     public Vector2 coord;
-
+    //접근자
     public UISprite uiSprite { get { return GetComponent<UISprite>(); } }
-    public Board board
-    { get { return GetComponentInParent<Board>(); } }
+    public Board board{ get { return GetComponentInParent<Board>(); } }
 
-    public void SetRandomElement()
+    void OnEnable()
     {
         type = (elementType)Random.Range(0, 6);
-        syncSprite();
-    }
-    void syncSprite()
-    {
         switch (type)
         {
             case elementType.fire:
@@ -50,93 +44,74 @@ public class Element : UIDragDropItem{
             case elementType.heart:
                 uiSprite.color = new Color(0.8f, 0, 0.8f);
                 break;
-
         }
-        //만약 다른 스프라이트로 변경하고 싶다면 이런 방식으로 하면 좋다. 아틀라스 내에 스프라이트의 이름이 같아야함
-        //GetComponent<UISprite>().spriteName = type.ToString();
-
     }
-    void OnEnable()
-    {
-        SetRandomElement();
-    }
-
     protected override void OnDragDropStart()
     {
-    //    Debug.Log("으하하 시작");
-        board.curDrag = this;
-
-        // Disable the collider so that it doesn't intercept events
-        if (mButton != null) mButton.isEnabled = false;
-        else if (mCollider != null) mCollider.enabled = false;
-
-        mTouchID = UICamera.currentTouchID;
-        mParent = mTrans.parent;
-        mRoot = NGUITools.FindInParents<UIRoot>(mParent);
-        mTable = NGUITools.FindInParents<UITable>(mParent);
-
-        // Re-parent the item
-        if (UIDragDropRoot.root != null)
-            mTrans.parent = UIDragDropRoot.root;
-
-        Vector3 pos = mTrans.localPosition;
-        pos.z = 0f;
-        mTrans.localPosition = pos;
-
-        // Notify the widgets that the parent has changed
-        NGUITools.MarkParentAsChanged(gameObject);
-
-        if (mTable != null) mTable.repositionNow = true;
-    }
-    protected override void OnDragDropMove(Vector3 delta)
-    {
-        mTrans.localPosition += delta;     
+       // board.IgnoreReposition.Add(this);
+        base.OnDragDropStart();
     }
     protected override void OnDragDropRelease(GameObject surface)
     {
-        board.curDrag = null;
-
-        mTouchID = int.MinValue;
-        // Re-enable the collider
-        if (mButton != null) mButton.isEnabled = true;
-        else if (mCollider != null) mCollider.enabled = true;
-
-        // Is there a droppable container?
-        UIDragDropContainer container = surface ? NGUITools.FindInParents<UIDragDropContainer>(surface) : null;
-
-        if (container != null)
-        {
-            // Container found -- parent this object to the container
-            mTrans.parent = (container.reparentTarget != null) ? container.reparentTarget : container.transform;
-
-            Vector3 pos = mTrans.localPosition;
-            pos.z = 0f;
-            mTrans.localPosition = pos;
-        }
-        else
-        {
-            // No valid container under the mouse -- revert the item's parent
-            mTrans.parent = mParent;
-        }
-
-        // Update the grid and table references
-        mParent = mTrans.parent;
-        mTable = NGUITools.FindInParents<UITable>(mParent);
-
-        // Notify the widgets that the parent has changed
-        NGUITools.MarkParentAsChanged(gameObject);
-
-        if (mTable != null) mTable.repositionNow = true;
+       // board.IgnoreReposition.Remove(this);
+        base.OnDragDropRelease(surface);
     }
 
+    bool key = false;
     void OnDragOver(GameObject col)
-    {
-        if (col != gameObject)
+    {       
+        if (col != gameObject && !key)
         {
+            key = true;               
             Vector2 temp = col.GetComponent<Element>().coord;
-            col.GetComponent<Element>().coord = GetComponent<Element>().coord;
-            GetComponent<Element>().coord = temp;
-            board.Reposition();
-        }       
+            col.GetComponent<Element>().coord = coord;
+            coord = temp;
+            StartCoroutine(CircleMoveDrop(coordPosition, 0.08f));  //이렇게 사용함.
+            //board.Reposition();   
+        }   
+    }
+    //코루틴 함수
+    IEnumerator MoveDrop(Vector3 dest, float duration)
+    {  
+        board.IgnoreReposition.Add(this);      
+        Vector3 start = transform.localPosition;     //시작좌표를 저장
+
+        float t = 0;
+        while( t < 1 )
+        {
+            t += Time.deltaTime / duration;  //t는 0부터 1까지 duration시간동안 오르게 됨
+            transform.localPosition = Vector3.Slerp(start, dest, t); //보간 함수
+            yield return null;
+        }      
+        board.IgnoreReposition.Remove(this);  
+        key = false;
+    }
+    IEnumerator CircleMoveDrop(Vector3 dest, float duration)
+    {
+        board.IgnoreReposition.Add(this);
+    
+        Vector3 center = (dest + transform.localPosition) / 2;
+        Vector3 blueVector = transform.localPosition - center;
+        blueVector.z = 0;// 혹시몰라서 제거.    
+        //외적을 사용해서 수직백터를 구한다.
+        Vector3 redVector = Vector3.Cross(blueVector, new Vector3(0, 0, 1));    
+        Vector3 temp;
+        float t = 0;
+        while (t < 1)
+        {
+            t += Time.deltaTime / duration;  //t는 0부터 1까지 duration시간동안 오르게 됨
+            temp = center + Mathf.Sin(t * Mathf.PI) * redVector + Mathf.Cos(t * Mathf.PI) * blueVector;       
+            transform.localPosition = temp; //보간 함수
+            yield return null;
+        }
+        transform.localPosition = dest;
+        board.IgnoreReposition.Remove(this);
+        key = false;
+    }
+
+
+    Vector3 coordPosition
+    {
+        get { return board.CoordToScreenPosition(coord); }
     }
 }

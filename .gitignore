@@ -24,7 +24,8 @@
 .LSOverride
 
 # Icon must ends with two \r.
-Icon
+Icon
+
 
 # Thumbnails
 ._*
@@ -52,3 +53,11 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 *.meta
+1. Image/original/dark.png
+1. Image/original/fire.png
+1. Image/original/heart.png
+1. Image/original/light.png
+1. Image/original/water.png
+1. Image/original/wood.png
+*.png
+x. other/atlas/Atlas.png

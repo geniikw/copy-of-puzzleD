@@ -105,7 +105,7 @@ MonoBehaviour:
   rightType: 1
   bottomType: 1
   topType: 1
-  mAtlas: {fileID: 11400000, guid: 354ecbb3f684ae94f97d86c47da86d93, type: 2}
+  mAtlas: {fileID: 11400000, guid: 886550fb094940746998c217070fc844, type: 2}
   mSpriteName: circle
   mFillCenter: 1
 --- !u!1001 &100100000
