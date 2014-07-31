@@ -1,15 +1,31 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
-public class CopyPDTool 
+public static class CopyPDTool 
 {
 	public static int CoordToIndex(Vector2 coord)
     {
         return ((int)coord.x % 6 + (int)coord.y * 6);  
     }
+    public static int CoordToIndex(int x , int y)
+    {
+        return x % 6 + y * 6;
+    }
 
     public static Vector2 IndexToCoord(int index)
     {
         return new Vector2(index % 6, (int)(index / 6));
-    } 
+    }
+
+
+    public static List<Transform> Swap(this List<Transform> list,
+        int index1,
+        int index2)
+    {
+        Transform temp = list[index1];
+        list[index1] = list[index2];
+        list[index2] = temp;
+        return list;
+    }
 }

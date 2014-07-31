@@ -755,7 +755,7 @@ MonoBehaviour:
   keepWithinPanel: 0
   padding: {x: 14, y: 14}
   sorted: 0
-  curDrag: {fileID: 0}
+  IgnoreReposition: []
 --- !u!114 &128557236
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1375,7 +1375,7 @@ MonoBehaviour:
   eventType: 1
   eventReceiverMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 32
   debug: 0
   useMouse: 1
   useTouch: 1

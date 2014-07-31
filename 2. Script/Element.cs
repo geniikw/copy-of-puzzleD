@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(BoxCollider))]
-
 public class Element : UIDragDropItem{  
     
     public enum elementType
@@ -12,7 +12,8 @@ public class Element : UIDragDropItem{
         wood,
         light,
         dark,
-        heart
+        heart,
+        nothing
     }
     //맴버 변수
     public elementType type;
@@ -20,7 +21,8 @@ public class Element : UIDragDropItem{
     //접근자
     public UISprite uiSprite { get { return GetComponent<UISprite>(); } }
     public Board board{ get { return GetComponentInParent<Board>(); } }
-
+    Vector3 coordPosition{ get { return board.CoordToScreenPosition(coord); } }
+    
     void OnEnable()
     {
         type = (elementType)Random.Range(0, 6);
@@ -48,6 +50,12 @@ public class Element : UIDragDropItem{
     }
     protected override void OnDragDropStart()
     {
+        //debug
+        foreach(Transform a in board.children)
+        {
+            a.GetComponent<Element>().SetColor();
+        }
+
        // board.IgnoreReposition.Add(this);
         base.OnDragDropStart();
     }
@@ -55,6 +63,16 @@ public class Element : UIDragDropItem{
     {
        // board.IgnoreReposition.Remove(this);
         base.OnDragDropRelease(surface);
+        board.DectectionColumn();
+        board.DectectionRow();
+        GameCore.instance.label.text = "Destroy Element" + board.destroyElement.Count;
+        //이하 디버그용
+        foreach (Element a in board.destroyElement)
+        {
+            a.SetColor(Color.black);
+        }
+
+
     }
 
     bool key = false;
@@ -62,14 +80,52 @@ public class Element : UIDragDropItem{
     {       
         if (col != gameObject && !key)
         {
+            int first = CopyPDTool.CoordToIndex(coord);
+            int second = CopyPDTool.CoordToIndex(col.GetComponent<Element>().coord);
             key = true;               
+            
             Vector2 temp = col.GetComponent<Element>().coord;
             col.GetComponent<Element>().coord = coord;
             coord = temp;
+         
+            board.children.Swap(first, second);
+     
             StartCoroutine(CircleMoveDrop(coordPosition, 0.08f));  //이렇게 사용함.
             //board.Reposition();   
         }   
     }
+
+
+    //디버그용 
+    public void SetColor()
+    {    
+        switch (type)
+        {
+            case elementType.fire:
+                uiSprite.color = new Color(0.8f, 0.2f, 0.2f);
+                break;
+            case elementType.water:
+                uiSprite.color = new Color(0.2f, 0.2f, 0.8f);
+                break;
+            case elementType.wood:
+                uiSprite.color = new Color(0.2f, 0.8f, 0.2f);
+                break;
+            case elementType.light:
+                uiSprite.color = new Color(0.8f, 0.8f, 0);
+                break;
+            case elementType.dark:
+                uiSprite.color = new Color(0.5f, 0.1f, 0.8f);
+                break;
+            case elementType.heart:
+                uiSprite.color = new Color(0.8f, 0, 0.8f);
+                break;
+        }
+    }
+    public void SetColor(Color color)
+    {
+        uiSprite.color = color;
+    }
+
     //코루틴 함수
     IEnumerator MoveDrop(Vector3 dest, float duration)
     {  
@@ -88,8 +144,7 @@ public class Element : UIDragDropItem{
     }
     IEnumerator CircleMoveDrop(Vector3 dest, float duration)
     {
-        board.IgnoreReposition.Add(this);
-    
+        board.IgnoreReposition.Add(this); 
         Vector3 center = (dest + transform.localPosition) / 2;
         Vector3 blueVector = transform.localPosition - center;
         blueVector.z = 0;// 혹시몰라서 제거.    
@@ -109,9 +164,4 @@ public class Element : UIDragDropItem{
         key = false;
     }
 
-
-    Vector3 coordPosition
-    {
-        get { return board.CoordToScreenPosition(coord); }
-    }
 }
