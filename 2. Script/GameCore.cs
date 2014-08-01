@@ -4,8 +4,8 @@ using System.Collections;
 public class GameCore : MonoBehaviour 
 {
     public UILabel label;
-    
-    
+    public Transform deadLine;
+
     public static GameCore instance;
 	// Use this for initialization
 	void Awake ()

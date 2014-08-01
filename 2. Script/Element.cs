@@ -18,6 +18,8 @@ public class Element : UIDragDropItem{
     //맴버 변수
     public elementType type;
     public Vector2 coord;
+    public int drop;
+
     //접근자
     public UISprite uiSprite { get { return GetComponent<UISprite>(); } }
     public Board board{ get { return GetComponentInParent<Board>(); } }
@@ -25,54 +27,24 @@ public class Element : UIDragDropItem{
     
     void OnEnable()
     {
-        type = (elementType)Random.Range(0, 6);
-        switch (type)
-        {
-            case elementType.fire:
-                uiSprite.color = new Color(0.8f, 0.2f, 0.2f);
-                break;
-            case elementType.water:
-                uiSprite.color = new Color(0.2f, 0.2f, 0.8f);
-                break;
-            case elementType.wood:
-                uiSprite.color = new Color(0.2f, 0.8f, 0.2f);
-                break;
-            case elementType.light:
-                uiSprite.color = new Color(0.8f, 0.8f, 0);
-                break;
-            case elementType.dark:
-                uiSprite.color = new Color(0.5f, 0.1f, 0.8f);
-                break;
-            case elementType.heart:
-                uiSprite.color = new Color(0.8f, 0, 0.8f);
-                break;
-        }
+        SetRandomColor();
     }
     protected override void OnDragDropStart()
     {
-        //debug
-        foreach(Transform a in board.children)
-        {
-            a.GetComponent<Element>().SetColor();
-        }
-
-       // board.IgnoreReposition.Add(this);
         base.OnDragDropStart();
+        //리포지션을 하지 않는다.
+        board.bReposition = false;
     }
     protected override void OnDragDropRelease(GameObject surface)
     {
-       // board.IgnoreReposition.Remove(this);
+        //board.IgnoreReposition.Remove(this);
         base.OnDragDropRelease(surface);
-        board.DectectionColumn();
-        board.DectectionRow();
-        GameCore.instance.label.text = "Destroy Element" + board.destroyElement.Count;
-        //이하 디버그용
-        foreach (Element a in board.destroyElement)
-        {
-            a.SetColor(Color.black);
-        }
-
-
+        //역시 리포지션을 하지 않는다.
+        board.bReposition = false;
+        //board에서 해당 일처리를 한다.
+        board.DectectDestoryElement(); 
+    
+        //이제 제자리로 들어가야한다.
     }
 
     bool key = false;
@@ -88,15 +60,17 @@ public class Element : UIDragDropItem{
             col.GetComponent<Element>().coord = coord;
             coord = temp;
          
-            board.children.Swap(first, second);
-     
+            board.children.Swap(first, second);    
             StartCoroutine(CircleMoveDrop(coordPosition, 0.08f));  //이렇게 사용함.
             //board.Reposition();   
         }   
     }
 
-
-    //디버그용 
+    public void SetRandomColor()
+    {
+        type = (elementType)Random.Range(0, 6);
+        SetColor();
+    }
     public void SetColor()
     {    
         switch (type)
@@ -127,21 +101,22 @@ public class Element : UIDragDropItem{
     }
 
     //코루틴 함수
-    IEnumerator MoveDrop(Vector3 dest, float duration)
+    public IEnumerator MoveToMyPosition(float duration)
     {  
-        board.IgnoreReposition.Add(this);      
+        board.IgnoreReposition.Add(this);   
         Vector3 start = transform.localPosition;     //시작좌표를 저장
-
+        Vector3 dest = board.CoordToScreenPosition(coord);
         float t = 0;
         while( t < 1 )
         {
             t += Time.deltaTime / duration;  //t는 0부터 1까지 duration시간동안 오르게 됨
-            transform.localPosition = Vector3.Slerp(start, dest, t); //보간 함수
+            transform.localPosition = Vector3.Lerp(start, dest, t); //보간 함수
             yield return null;
         }      
         board.IgnoreReposition.Remove(this);  
         key = false;
     }
+
     IEnumerator CircleMoveDrop(Vector3 dest, float duration)
     {
         board.IgnoreReposition.Add(this); 
@@ -164,4 +139,37 @@ public class Element : UIDragDropItem{
         key = false;
     }
 
+    //강의5시작
+    public void SendDropMessage()
+    {
+        int curY = (int)coord.y;
+        while(curY > 0)
+        {
+            curY--;
+            board.getElement((int)coord.x, curY).getDropMessage();
+        }
+    }
+    public void getDropMessage()
+    {
+        drop++;
+    }
+    public void moveToDeleteLine()
+    {
+        Vector3 temp = transform.localPosition;
+        temp.y = GameCore.instance.deadLine.transform.localPosition.y - drop * 128;
+        transform.localPosition = temp;
+        SetRandomColor();// 올라갈때 속성을 바꾼다.
+    }
+    public void genCoord()
+    {
+        //새로 생성되면서 새로운 좌표를 받는 함수.
+        coord = new Vector2(coord.x, drop);
+        drop = 0;
+    }
+    public void dropCoord()
+    {   //drop값 만큼 좌표를 내린다.
+        coord = new Vector2(coord.x, coord.y + drop);
+        drop = 0;
+    }
+    
 }

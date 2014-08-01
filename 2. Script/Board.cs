@@ -31,7 +31,8 @@ public class Board : UITable
             Vector2 bCoord = b.GetComponent<Element>().coord;
             return CopyPDTool.CoordToIndex(aCoord).CompareTo(CopyPDTool.CoordToIndex(bCoord));
     }
-    
+    public bool bReposition { get { return mReposition; } set { mReposition = value; } }
+
     //이 List에 등록된 Element는 Reposition 작업시 위치를 변경하지 않는다.
     public List<Element> IgnoreReposition = new List<Element>();
     public override void Reposition()
@@ -55,51 +56,43 @@ public class Board : UITable
         float blockHeight = uiSprite.height / row;
         return new Vector3(blockWidth / 2 + blockWidth * coord.x, -blockHeight / 2 - blockHeight * coord.y, 0);
     }
-
-    //강의4 시작
+    
     public Element getElement(Vector2 coord)
     {
         return children[CopyPDTool.CoordToIndex(coord)].GetComponent<Element>();
     }
-
     public Element getElement(int x,int y)
     {
         return children[CopyPDTool.CoordToIndex(x,y)].GetComponent<Element>();
     }
 
-
-
+    //파괴시킬 엘리먼트
     public List<Element> destroyElement = new List<Element>();
-    public void DectectionColumn()
-    {
-        destroyElement.Clear();
+    void DectectionColumn()
+    {       
         List<Element> tempArray = new List<Element>();
         for (int x = 0; x < 6; x++)
-        {
+        {  
             for (int y = 0; y < 5; y++)
-            {            
+            {   //5x6 모든 원소를 종주함      
                 if(tempArray.Count == 0)
-                {
+                {   
                     tempArray.Add(getElement(x, y));
                     continue;
                 }
-
                 if(tempArray[0].type != getElement(x,y).type)
                 {          
                     if (tempArray.Count >= 3)
-                    {          
+                    {         
                         foreach (Element a in tempArray)
                         {
                             destroyElement.Add(a);
                         }
-                    }
-                    
+                    }               
                     tempArray.Clear();
-                }  
-       
+                }    
                 tempArray.Add(getElement(x, y)); 
             }
-
             if (tempArray.Count >= 3)
             {
                 foreach (Element a in tempArray)
@@ -109,9 +102,8 @@ public class Board : UITable
             }
             tempArray.Clear();
         }
-       // Debug.Log(destroyElement.Count + "개의 원소 추가");
     }
-    public void DectectionRow()
+    void DectectionRow()
     {  
         List<Element> tempArray = new List<Element>();
         for (int y = 0; y < 5; y++)
@@ -153,7 +145,61 @@ public class Board : UITable
     }
 
 
+    IEnumerator endSequence()
+    {
+        while (true)
+        {  
+            //세로감지
+            DectectionColumn();
+            //가로감지
+            DectectionRow();
+            if (destroyElement.Count == 0)
+                break;//만약 파괴할게 없다면 빠져나옴
 
+            foreach (Element a in destroyElement)
+            {   //파괴될 엘리먼트가 메세지를 보냄.
+                a.SendDropMessage();
+            }
+            foreach (Element a in destroyElement)
+            {   //파괴될 엘리먼트가 메세지를 보냄.
+                a.moveToDeleteLine();
+            }         
+            foreach (Transform a in children)
+            {
+                if (!destroyElement.Contains(a.GetComponent<Element>()))
+                {   //파괴하지 않은 드롭들을 Drop 만큼 좌표를 내리고 이동시킴
+                    a.GetComponent<Element>().dropCoord();
+                    StartCoroutine(a.GetComponent<Element>().MoveToMyPosition(0.4f));
+                }
+            }
+            yield return new WaitForSeconds(1f);
+
+            foreach (Element a in destroyElement)
+            {   //새로 생성된 Element들을 이동시킴
+                a.genCoord();
+                StartCoroutine(a.MoveToMyPosition(0.1f));
+            }
+            yield return new WaitForSeconds(0.1f);
+            children.Sort(compareCoord);
+            destroyElement.Clear(); //시작점으로 가서 새로 파괴할게 있는지 다시 알아봄
+        }
+       
+    }
+
+    public List<Element> DectectDestoryElement()
+    {
+        StartCoroutine(endSequence());
+        return destroyElement;            
+    }
+
+    //강의5 시작
+    public void OrderToSendMessage()
+    {
+        foreach(Element a in destroyElement)
+        {
+            a.SendDropMessage();
+        }
+    }
 }
 
 #if UNITY_EDITOR
