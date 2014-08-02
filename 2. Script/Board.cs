@@ -147,6 +147,7 @@ public class Board : UITable
 
     IEnumerator endSequence()
     {
+        //입력 막음
         while (true)
         {  
             //세로감지
@@ -155,41 +156,36 @@ public class Board : UITable
             DectectionRow();
             if (destroyElement.Count == 0)
                 break;//만약 파괴할게 없다면 빠져나옴
-
-            foreach (Element a in destroyElement)
-            {   //파괴될 엘리먼트가 메세지를 보냄.
-                a.SendDropMessage();
-            }
-            foreach (Element a in destroyElement)
-            {   //파괴될 엘리먼트가 메세지를 보냄.
-                a.moveToDeleteLine();
-            }         
+            foreach (Element a in destroyElement) //파괴될 엘리먼트가 메세지를 보냄.
+            {   a.SendDropMessage();            }
+            foreach (Element a in destroyElement) //파괴될 엘리먼트 없앰
+            {   StartCoroutine(a.Dead(0.5f));   }
+            yield return new WaitForSeconds(0.5f);      
             foreach (Transform a in children)
-            {
-                if (!destroyElement.Contains(a.GetComponent<Element>()))
+            {   if (!destroyElement.Contains(a.GetComponent<Element>()))
                 {   //파괴하지 않은 드롭들을 Drop 만큼 좌표를 내리고 이동시킴
                     a.GetComponent<Element>().dropCoord();
-                    StartCoroutine(a.GetComponent<Element>().MoveToMyPosition(0.4f));
+                    StartCoroutine(a.GetComponent<Element>().MoveToMyPosition(0.3f));
                 }
             }
-            yield return new WaitForSeconds(1f);
-
+            yield return new WaitForSeconds(0.3f);         
+            foreach (Element a in destroyElement)
+            {   //드롭을 새로 생성함
+                StartCoroutine( a.Alive(0.5f));                
+            }
+            yield return new WaitForSeconds(0.5f);
             foreach (Element a in destroyElement)
             {   //새로 생성된 Element들을 이동시킴
-                a.genCoord();
-                StartCoroutine(a.MoveToMyPosition(0.1f));
-            }
-            yield return new WaitForSeconds(0.1f);
+                StartCoroutine(a.MoveToMyPosition(0.3f));
+            }          
+            yield return new WaitForSeconds(0.3f);
             children.Sort(compareCoord);
-            destroyElement.Clear(); //시작점으로 가서 새로 파괴할게 있는지 다시 알아봄
+            destroyElement.Clear(); 
         }
-       
     }
-
-    public List<Element> DectectDestoryElement()
+    public Coroutine DectectDestoryElement()
     {
-        StartCoroutine(endSequence());
-        return destroyElement;            
+        return StartCoroutine(endSequence());          
     }
 
     //강의5 시작

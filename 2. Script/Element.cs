@@ -41,12 +41,22 @@ public class Element : UIDragDropItem{
         base.OnDragDropRelease(surface);
         //역시 리포지션을 하지 않는다.
         board.bReposition = false;
-        //board에서 해당 일처리를 한다.
-        board.DectectDestoryElement(); 
-    
-        //이제 제자리로 들어가야한다.
+        StartCoroutine(turnEndSeq());   
     }
-
+    IEnumerator turnEndSeq()
+    {
+        //터치를 막음
+        GameCore.instance.uiCamera.useMouse = false;
+        GameCore.instance.uiCamera.useTouch = false;
+        //제자리로 돌아감
+        StartCoroutine(MoveToMyPosition(0.1f));
+        //board가 다끝나면 알려줌
+        yield return board.DectectDestoryElement();
+        //터치를 품
+        GameCore.instance.uiCamera.useMouse = true;
+        GameCore.instance.uiCamera.useTouch = true;
+    }
+    
     bool key = false;
     void OnDragOver(GameObject col)
     {       
@@ -72,7 +82,9 @@ public class Element : UIDragDropItem{
         SetColor();
     }
     public void SetColor()
-    {    
+    {
+        //alpha값을 유지해야함
+        float tempAlpha = uiSprite.alpha;
         switch (type)
         {
             case elementType.fire:
@@ -94,13 +106,13 @@ public class Element : UIDragDropItem{
                 uiSprite.color = new Color(0.8f, 0, 0.8f);
                 break;
         }
+        uiSprite.alpha = tempAlpha;
     }
     public void SetColor(Color color)
     {
         uiSprite.color = color;
     }
 
-    //코루틴 함수
     public IEnumerator MoveToMyPosition(float duration)
     {  
         board.IgnoreReposition.Add(this);   
@@ -116,8 +128,7 @@ public class Element : UIDragDropItem{
         board.IgnoreReposition.Remove(this);  
         key = false;
     }
-
-    IEnumerator CircleMoveDrop(Vector3 dest, float duration)
+    public IEnumerator CircleMoveDrop(Vector3 dest, float duration)
     {
         board.IgnoreReposition.Add(this); 
         Vector3 center = (dest + transform.localPosition) / 2;
@@ -138,8 +149,18 @@ public class Element : UIDragDropItem{
         board.IgnoreReposition.Remove(this);
         key = false;
     }
+    public IEnumerator SetAlphaValueForSecond(float alpha, float duration)
+    {
+        float t = 0;
+        float start = uiSprite.alpha;
+        while(t < 1)
+        {
+            t += Time.deltaTime / duration;
+            uiSprite.alpha = Mathf.Lerp(start, alpha,t);         
+            yield return null;
+        }
+    }
 
-    //강의5시작
     public void SendDropMessage()
     {
         int curY = (int)coord.y;
@@ -153,23 +174,34 @@ public class Element : UIDragDropItem{
     {
         drop++;
     }
-    public void moveToDeleteLine()
+    
+
+    public IEnumerator Dead(float time)
     {
+        yield return StartCoroutine(SetAlphaValueForSecond(0f, time));
+        
         Vector3 temp = transform.localPosition;
         temp.y = GameCore.instance.deadLine.transform.localPosition.y - drop * 128;
         transform.localPosition = temp;
-        SetRandomColor();// 올라갈때 속성을 바꾼다.
-    }
-    public void genCoord()
-    {
-        //새로 생성되면서 새로운 좌표를 받는 함수.
+       
         coord = new Vector2(coord.x, drop);
-        drop = 0;
+        drop = 0;    
     }
+    
+    public IEnumerator Alive(float time)
+    {
+        SetRandomColor();//속성을 바꾼다.
+        yield return StartCoroutine(SetAlphaValueForSecond(1f, time));
+      
+    }
+    
+      
     public void dropCoord()
     {   //drop값 만큼 좌표를 내린다.
+       
         coord = new Vector2(coord.x, coord.y + drop);
         drop = 0;
     }
+   
     
 }
