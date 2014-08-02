@@ -19,6 +19,7 @@ public class Element : UIDragDropItem{
     public elementType type;
     public Vector2 coord;
     public int drop;
+    public List<Element> listGroup = new List<Element>();
 
     //접근자
     public UISprite uiSprite { get { return GetComponent<UISprite>(); } }
@@ -177,17 +178,32 @@ public class Element : UIDragDropItem{
     
 
     public IEnumerator Dead(float time)
-    {
+    {       
         yield return StartCoroutine(SetAlphaValueForSecond(0f, time));
-        
+
+        board.listDead.Add(this);
+
         Vector3 temp = transform.localPosition;
-        temp.y = GameCore.instance.deadLine.transform.localPosition.y - drop * 128;
-        transform.localPosition = temp;
-       
+        temp.y = GameCore.instance.deadLine.transform.localPosition.y - drop * board.uiSprite.height/5;
+        transform.localPosition = temp;       
         coord = new Vector2(coord.x, drop);
         drop = 0;    
     }
     
+    public IEnumerator DeadAll(float time)
+    {
+        if (listGroup.Count == 0)
+            Debug.LogError("잘못된 사용 : " + gameObject.name);
+
+        foreach (Element a in listGroup)
+        {   
+            StartCoroutine(a.Dead(time));
+        }    
+        //다썼으니 초기화
+        listGroup.Clear();
+        yield return new WaitForSeconds(time);
+    }
+
     public IEnumerator Alive(float time)
     {
         SetRandomColor();//속성을 바꾼다.

@@ -8,7 +8,6 @@ public class Board : UITable
 {
     const int column = 6;
     const int row = 5;
-    
     //단순히 UITable에서 Start를 쓰고 있기떄문에 Awake를 씀...
     void Awake()
     {
@@ -67,10 +66,11 @@ public class Board : UITable
     }
 
     //파괴시킬 엘리먼트
-    public List<Element> destroyElement = new List<Element>();
+    public List<Element> listDestroy = new List<Element>();
+    public List<Element> listDead = new List<Element>();
     void DectectionColumn()
     {       
-        List<Element> tempArray = new List<Element>();
+        List<Element> tempArray = new List<Element>();     
         for (int x = 0; x < 6; x++)
         {  
             for (int y = 0; y < 5; y++)
@@ -86,7 +86,8 @@ public class Board : UITable
                     {         
                         foreach (Element a in tempArray)
                         {
-                            destroyElement.Add(a);
+                            a.listGroup = tempArray.GetRange(0, tempArray.Count);
+                            listDestroy.Add(a);
                         }
                     }               
                     tempArray.Clear();
@@ -97,7 +98,8 @@ public class Board : UITable
             {
                 foreach (Element a in tempArray)
                 {
-                    destroyElement.Add(a);
+                    a.listGroup = tempArray.GetRange(0, tempArray.Count);
+                    listDestroy.Add(a);
                 }
             }
             tempArray.Clear();
@@ -119,31 +121,36 @@ public class Board : UITable
                 if (tempArray[0].type != getElement(x, y).type)
                 {
                     if (tempArray.Count >= 3)
-                    {
+                    {                                       
                         foreach (Element a in tempArray)
-                        {
-                            //이부분만 다름
-                            if(!destroyElement.Contains(a))
-                                destroyElement.Add(a);
+                        {  
+                           if(!listDestroy.Contains(a))
+                           {
+                               a.listGroup = tempArray.GetRange(0, tempArray.Count);
+                               listDestroy.Add(a);                                         
+                           }
                         }
                     }
-
                     tempArray.Clear();
                 }
                 tempArray.Add(getElement(x, y));
             }
             if (tempArray.Count >= 3)
             {
+
                 foreach (Element a in tempArray)
                 {
-                    destroyElement.Add(a);
+                    if (!listDestroy.Contains(a))
+                    {
+                        a.listGroup = tempArray.GetRange(0, tempArray.Count);
+                          listDestroy.Add(a);
+                    }
                 }
             }
             tempArray.Clear();
         }
-        Debug.Log(destroyElement.Count + "개의 원소 추가");
+//        Debug.Log(listDestroy.Count + "개의 원소 추가");
     }
-
 
     IEnumerator endSequence()
     {
@@ -154,33 +161,40 @@ public class Board : UITable
             DectectionColumn();
             //가로감지
             DectectionRow();
-            if (destroyElement.Count == 0)
+           
+            if (listDestroy.Count == 0)
                 break;//만약 파괴할게 없다면 빠져나옴
-            foreach (Element a in destroyElement) //파괴될 엘리먼트가 메세지를 보냄.
+            
+            foreach (Element a in listDestroy) //파괴될 엘리먼트가 메세지를 보냄.
             {   a.SendDropMessage();            }
-            foreach (Element a in destroyElement) //파괴될 엘리먼트 없앰
-            {   StartCoroutine(a.Dead(0.5f));   }
+   
+            foreach (Element a in listDestroy)
+            {   //if(!listDead.Contains(a))
+                    StartCoroutine(a.Dead(0.5f));   
+            }
             yield return new WaitForSeconds(0.5f);      
+                    
             foreach (Transform a in children)
-            {   if (!destroyElement.Contains(a.GetComponent<Element>()))
+            {   if (!listDestroy.Contains(a.GetComponent<Element>()))
                 {   //파괴하지 않은 드롭들을 Drop 만큼 좌표를 내리고 이동시킴
                     a.GetComponent<Element>().dropCoord();
                     StartCoroutine(a.GetComponent<Element>().MoveToMyPosition(0.3f));
                 }
             }
             yield return new WaitForSeconds(0.3f);         
-            foreach (Element a in destroyElement)
+            foreach (Element a in listDestroy)
             {   //드롭을 새로 생성함
                 StartCoroutine( a.Alive(0.5f));                
             }
             yield return new WaitForSeconds(0.5f);
-            foreach (Element a in destroyElement)
+            foreach (Element a in listDestroy)
             {   //새로 생성된 Element들을 이동시킴
                 StartCoroutine(a.MoveToMyPosition(0.3f));
             }          
             yield return new WaitForSeconds(0.3f);
             children.Sort(compareCoord);
-            destroyElement.Clear(); 
+            listDestroy.Clear();
+            listDead.Clear();
         }
     }
     public Coroutine DectectDestoryElement()
@@ -191,7 +205,7 @@ public class Board : UITable
     //강의5 시작
     public void OrderToSendMessage()
     {
-        foreach(Element a in destroyElement)
+        foreach(Element a in listDestroy)
         {
             a.SendDropMessage();
         }
