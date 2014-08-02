@@ -176,7 +176,6 @@ public class Element : UIDragDropItem{
         drop++;
     }
     
-
     public IEnumerator Dead(float time)
     {       
         yield return StartCoroutine(SetAlphaValueForSecond(0f, time));
@@ -188,8 +187,7 @@ public class Element : UIDragDropItem{
         transform.localPosition = temp;       
         coord = new Vector2(coord.x, drop);
         drop = 0;    
-    }
-    
+    }  
     public IEnumerator DeadAll(float time)
     {
         if (listGroup.Count == 0)
