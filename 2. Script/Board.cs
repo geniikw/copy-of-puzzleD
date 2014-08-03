@@ -67,7 +67,6 @@ public class Board : UITable
 
     //파괴시킬 엘리먼트
     public List<Element> listDestroy = new List<Element>();
-    public List<Element> listDead = new List<Element>();
     void DectectionColumn()
     {       
         List<Element> tempArray = new List<Element>();     
@@ -154,6 +153,7 @@ public class Board : UITable
 
     IEnumerator endSequence()
     {
+        GameCore.instance.combo = 0;
         //입력 막음
         while (true)
         {  
@@ -166,13 +166,16 @@ public class Board : UITable
                 break;//만약 파괴할게 없다면 빠져나옴
             
             foreach (Element a in listDestroy) //파괴될 엘리먼트가 메세지를 보냄.
-            {   a.SendDropMessage();            }
-   
+            {   a.SendDropMessage();            
+            }
+
+           
             foreach (Element a in listDestroy)
             {   //if(!listDead.Contains(a))
-                    StartCoroutine(a.Dead(0.5f));   
+                yield return StartCoroutine(a.Dead(0.1f));
+                GameCore.instance.combo += 1;
             }
-            yield return new WaitForSeconds(0.5f);      
+            //yield return new WaitForSeconds(0.5f);      
                     
             foreach (Transform a in children)
             {   if (!listDestroy.Contains(a.GetComponent<Element>()))
@@ -193,9 +196,9 @@ public class Board : UITable
             }          
             yield return new WaitForSeconds(0.3f);
             children.Sort(compareCoord);
-            listDestroy.Clear();
-            listDead.Clear();
+            listDestroy.Clear();    
         }
+        GameCore.instance.combo = 0;
     }
     public Coroutine DectectDestoryElement()
     {

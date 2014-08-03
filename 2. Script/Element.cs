@@ -32,12 +32,14 @@ public class Element : UIDragDropItem{
     }
     protected override void OnDragDropStart()
     {
+        GameCore.instance.getTouchMessage();
         base.OnDragDropStart();
         //리포지션을 하지 않는다.
         board.bReposition = false;
     }
     protected override void OnDragDropRelease(GameObject surface)
     {
+        GameCore.instance.getTouchMessage();
         //board.IgnoreReposition.Remove(this);
         base.OnDragDropRelease(surface);
         //역시 리포지션을 하지 않는다.
@@ -180,7 +182,7 @@ public class Element : UIDragDropItem{
     {       
         yield return StartCoroutine(SetAlphaValueForSecond(0f, time));
 
-        board.listDead.Add(this);
+        GameCore.instance.score += 10;
 
         Vector3 temp = transform.localPosition;
         temp.y = GameCore.instance.deadLine.transform.localPosition.y - drop * board.uiSprite.height/5;
