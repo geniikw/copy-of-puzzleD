@@ -19,20 +19,6 @@ public class AnimatorBind : MonoBehaviour
 	// Update is called once per frame
 	void LateUpdate () 
     {     
-        anim.SetInteger("HP", GameCore.instance.hp);
-        anim.SetInteger("RandomWaitPose", GameCore.instance.RandomPose);   
-        if(GameCore.instance.score - ScoreCounter > 200)
-        {
-            anim.SetTrigger("Score");
-            sound[0].Play();
-            ScoreCounter += 200;
-        }
-        if(GameCore.instance.combo - comboCounter == 6)
-        {
-            sound[1].Play();
-            anim.SetTrigger("Combo");
-            comboCounter += 6;
-        }
-
+  
 	}
 }

@@ -19,19 +19,34 @@ public class Element : UIDragDropItem{
     public elementType type;
     public Vector2 coord;
     public int drop;
-    public List<Element> listGroup = new List<Element>();
+    public Element[] chain = new Element[4];
+    public bool bComboFlag = false;
+
+    public void chainClear()
+    {
+        for(int n = 0 ; n < 4 ; n++)
+        {
+            chain[n] = null;
+        }
+    }
 
     //접근자
     public UISprite uiSprite { get { return GetComponent<UISprite>(); } }
     public Board board{ get { return GetComponentInParent<Board>(); } }
     Vector3 coordPosition{ get { return board.CoordToScreenPosition(coord); } }
-    
+
+    Vector2 rightCoord { get { return new Vector2(coord.x + 1, coord.y); } }
+    Vector2 leftCoord { get { return new Vector2(coord.x - 1, coord.y); } }
+    Vector2 upCoord { get { return new Vector2(coord.x, coord.y-1); } }
+    Vector2 downCoord { get { return new Vector2(coord.x, coord.y+1); } }
+
     void OnEnable()
     {
         SetRandomColor();
     }
     protected override void OnDragDropStart()
     {
+        
         GameCore.instance.getTouchMessage();
         base.OnDragDropStart();
         //리포지션을 하지 않는다.
@@ -45,6 +60,7 @@ public class Element : UIDragDropItem{
         //역시 리포지션을 하지 않는다.
         board.bReposition = false;
         StartCoroutine(turnEndSeq());   
+      
     }
     IEnumerator turnEndSeq()
     {
@@ -172,52 +188,59 @@ public class Element : UIDragDropItem{
             curY--;
             board.getElement((int)coord.x, curY).getDropMessage();
         }
+        SetupChain();
+       
     }
     public void getDropMessage()
     {
         drop++;
+    }  
+    public Coroutine DeadSelf(float time)
+    {
+       return StartCoroutine(Dead(time));
     }
     
     public IEnumerator Dead(float time)
     {       
         yield return StartCoroutine(SetAlphaValueForSecond(0f, time));
-
         GameCore.instance.score += 10;
-
         Vector3 temp = transform.localPosition;
         temp.y = GameCore.instance.deadLine.transform.localPosition.y - drop * board.uiSprite.height/5;
         transform.localPosition = temp;       
         coord = new Vector2(coord.x, drop);
-        drop = 0;    
+        drop = 0;
     }  
-    public IEnumerator DeadAll(float time)
-    {
-        if (listGroup.Count == 0)
-            Debug.LogError("잘못된 사용 : " + gameObject.name);
-
-        foreach (Element a in listGroup)
-        {   
-            StartCoroutine(a.Dead(time));
-        }    
-        //다썼으니 초기화
-        listGroup.Clear();
-        yield return new WaitForSeconds(time);
-    }
-
     public IEnumerator Alive(float time)
     {
+        bComboFlag = false;
         SetRandomColor();//속성을 바꾼다.
-        yield return StartCoroutine(SetAlphaValueForSecond(1f, time));
-      
-    }
-    
-      
+        yield return StartCoroutine(SetAlphaValueForSecond(1f, time));     
+    }         
     public void dropCoord()
-    {   //drop값 만큼 좌표를 내린다.
-       
+    {   //drop값 만큼 좌표를 내린다.       
         coord = new Vector2(coord.x, coord.y + drop);
         drop = 0;
     }
-   
-    
+
+    public void SetupChain()
+    {
+        int index = 0;
+        if (board.getElementType(upCoord) == type)
+        {
+            chain[index++] = board.getElement(upCoord);
+        }
+        if (board.getElementType(downCoord) == type)
+        {
+            chain[index++] = board.getElement(downCoord);
+        }
+        if (board.getElementType(rightCoord) == type)
+        {
+            chain[index++] = board.getElement(rightCoord);
+        }
+        if (board.getElementType(leftCoord) == type)
+        {
+            chain[index++] = board.getElement(leftCoord);
+        }
+    }
+     
 }

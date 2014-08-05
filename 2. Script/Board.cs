@@ -65,8 +65,58 @@ public class Board : UITable
         return children[CopyPDTool.CoordToIndex(x,y)].GetComponent<Element>();
     }
 
+    public Element.elementType getElementType(int x, int y)
+    {
+        if (  x < 0 || y < 0 || x > column || y > row)
+            return Element.elementType.nothing;
+
+        return children[CopyPDTool.CoordToIndex(x, y)].GetComponent<Element>().type;
+    }
+    public Element.elementType getElementType(Vector2 coord)
+    {
+        if ( coord.x < 0|| coord.y < 0 || coord.x >= column || coord.y >= row)
+            return Element.elementType.nothing;
+
+        return children[CopyPDTool.CoordToIndex(coord)].GetComponent<Element>().type;
+    }
+
     //파괴시킬 엘리먼트
     public List<Element> listDestroy = new List<Element>();
+    
+    
+    List<Element> listCombo = new List<Element>();
+   
+
+    bool ComboSequence(Element e)
+    {
+        if (e.bComboFlag == true)
+            return false;
+
+        int curIndex = 0;
+        listCombo.Clear();
+        listCombo.Add(e);
+        while (true)
+        {
+            if (curIndex >= listCombo.Count)
+                break;
+
+            foreach (Element add in listCombo[curIndex].chain)
+            {
+                if (add == null)
+                    break;
+ 
+                if (add.bComboFlag == true)
+                    continue;
+
+                if (listDestroy.Contains(add))
+                    listCombo.Add(add);     
+            }
+            listCombo[curIndex].bComboFlag = true;
+            curIndex++;
+        }
+        return true;
+    }
+
     void DectectionColumn()
     {       
         List<Element> tempArray = new List<Element>();     
@@ -74,34 +124,20 @@ public class Board : UITable
         {  
             for (int y = 0; y < 5; y++)
             {   //5x6 모든 원소를 종주함      
-                if(tempArray.Count == 0)
-                {   
-                    tempArray.Add(getElement(x, y));
-                    continue;
-                }
-                if(tempArray[0].type != getElement(x,y).type)
+                tempArray.Add(getElement(x, y)); 
+
+                if(y==4 || tempArray[0].type != getElement(x,y+1).type )
                 {          
                     if (tempArray.Count >= 3)
                     {         
                         foreach (Element a in tempArray)
-                        {
-                            a.listGroup = tempArray.GetRange(0, tempArray.Count);
+                        {                     
                             listDestroy.Add(a);
                         }
                     }               
                     tempArray.Clear();
-                }    
-                tempArray.Add(getElement(x, y)); 
+                }           
             }
-            if (tempArray.Count >= 3)
-            {
-                foreach (Element a in tempArray)
-                {
-                    a.listGroup = tempArray.GetRange(0, tempArray.Count);
-                    listDestroy.Add(a);
-                }
-            }
-            tempArray.Clear();
         }
     }
     void DectectionRow()
@@ -110,45 +146,25 @@ public class Board : UITable
         for (int y = 0; y < 5; y++)
         {
             for (int x = 0; x < 6; x++)
-            {
-                if (tempArray.Count == 0)
-                {
-                    tempArray.Add(getElement(x, y));
-                    continue;
-                }
-
-                if (tempArray[0].type != getElement(x, y).type)
+            {             
+               tempArray.Add(getElement(x, y));
+              
+                if (x == 5 || tempArray[0].type != getElement(x+1, y).type)
                 {
                     if (tempArray.Count >= 3)
                     {                                       
                         foreach (Element a in tempArray)
                         {  
                            if(!listDestroy.Contains(a))
-                           {
-                               a.listGroup = tempArray.GetRange(0, tempArray.Count);
+                           {            
                                listDestroy.Add(a);                                         
                            }
                         }
                     }
                     tempArray.Clear();
-                }
-                tempArray.Add(getElement(x, y));
+                }     
             }
-            if (tempArray.Count >= 3)
-            {
-
-                foreach (Element a in tempArray)
-                {
-                    if (!listDestroy.Contains(a))
-                    {
-                        a.listGroup = tempArray.GetRange(0, tempArray.Count);
-                          listDestroy.Add(a);
-                    }
-                }
-            }
-            tempArray.Clear();
         }
-//        Debug.Log(listDestroy.Count + "개의 원소 추가");
     }
 
     IEnumerator endSequence()
@@ -166,14 +182,23 @@ public class Board : UITable
                 break;//만약 파괴할게 없다면 빠져나옴
             
             foreach (Element a in listDestroy) //파괴될 엘리먼트가 메세지를 보냄.
-            {   a.SendDropMessage();            
+            {   
+                a.SendDropMessage();            
             }
 
-           
             foreach (Element a in listDestroy)
-            {   //if(!listDead.Contains(a))
-                yield return StartCoroutine(a.Dead(0.1f));
-                GameCore.instance.combo += 1;
+            {  //if(!listDead.Contains(a))
+               // yield return StartCoroutine(a.Dead(0.1f));
+                if(ComboSequence(a))
+                {
+                    foreach(Element b in listCombo)
+                    {
+                        StartCoroutine(b.Dead(0.5f));
+                    }
+
+                    yield return new WaitForSeconds(0.5f);        
+                }
+                a.chainClear();
             }
             //yield return new WaitForSeconds(0.5f);      
                     
@@ -196,15 +221,14 @@ public class Board : UITable
             }          
             yield return new WaitForSeconds(0.3f);
             children.Sort(compareCoord);
-            listDestroy.Clear();    
+            listDestroy.Clear();   
+ 
         }
-        GameCore.instance.combo = 0;
     }
     public Coroutine DectectDestoryElement()
     {
         return StartCoroutine(endSequence());          
     }
-
     //강의5 시작
     public void OrderToSendMessage()
     {

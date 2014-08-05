@@ -3,8 +3,7 @@ using System.Collections;
 
 public class GameCore : MonoBehaviour 
 {
-    public UILabel label;
-    public UILabel label2;
+    public UILabel[] label;
 
     public Transform deadLine;
     public UICamera uiCamera;
@@ -63,8 +62,8 @@ public class GameCore : MonoBehaviour
                wait = 0;
            }
        }
-       label.text = "Score : " + score;
-       label2.text = "Comboe : " + combo;
+       label[0].text = "Score : " + score;
+       //label[1].text = "Comboe : " + combo;
     }
 
     public void getTouchMessage()
