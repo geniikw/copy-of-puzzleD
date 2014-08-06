@@ -65,7 +65,6 @@ public class GameCore : MonoBehaviour
        label[0].text = "Score : " + score;
        //label[1].text = "Comboe : " + combo;
     }
-
     public void getTouchMessage()
     {
         wait = 0;

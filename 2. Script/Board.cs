@@ -1,9 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+
 public class Board : UITable 
 {
     const int column = 6;
@@ -18,7 +20,7 @@ public class Board : UITable
             child.GetComponent<Element>().coord = CopyPDTool.IndexToCoord(n);
         }
     }
-   
+
     protected override void Sort(List<Transform> list)
     {
         list.Sort(compareCoord);
