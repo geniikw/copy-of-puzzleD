@@ -11,7 +11,6 @@ GameObject:
   - 114: {fileID: 11400002}
   - 114: {fileID: 11400000}
   - 65: {fileID: 6500000}
-  - 114: {fileID: 11400004}
   m_Layer: 5
   m_Name: Element
   m_TagString: Untagged
@@ -96,8 +95,8 @@ MonoBehaviour:
   updateAnchors: 1
   mColor: {r: 1, g: 1, b: 1, a: 1}
   mPivot: 4
-  mWidth: 100
-  mHeight: 100
+  mWidth: 116
+  mHeight: 116
   mDepth: 1
   autoResizeBoxCollider: 0
   hideIfOffScreen: 0
@@ -116,21 +115,6 @@ MonoBehaviour:
   mAtlas: {fileID: 11400000, guid: 00fbafa75f92ffd44a7bb7dc38a1aa2d, type: 2}
   mSpriteName: circle
   mFillCenter: 1
---- !u!114 &11400004
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 100000}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d44bc69c2ca5f943b845318866dc1bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  audioClip: {fileID: 8300000, guid: cab912f3009b43843b0a48ac3120c6ad, type: 3}
-  trigger: 1
-  volume: 1
-  pitch: 1
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

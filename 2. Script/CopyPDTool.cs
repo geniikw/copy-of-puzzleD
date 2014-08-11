@@ -4,6 +4,12 @@ using System.Collections.Generic;
 
 public static class CopyPDTool 
 {
+    public static void SwapCoord(Element a , Element b)
+    {
+        Vector2 temp = b.coord;
+        b.coord = a.coord;
+        a.coord = temp;
+    }
 	public static int CoordToIndex(Vector2 coord)
     {
         return ((int)coord.x % 6 + (int)coord.y * 6);  

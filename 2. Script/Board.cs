@@ -118,7 +118,6 @@ public class Board : UITable
         }
         return true;
     }
-
     void DectectionColumn()
     {       
         List<Element> tempArray = new List<Element>();     
@@ -171,6 +170,9 @@ public class Board : UITable
 
     IEnumerator endSequence()
     {
+        GameCore.instance.uiCamera.useMouse = false;
+        GameCore.instance.uiCamera.useTouch = false;
+
         GameCore.instance.combo = 0;
         //입력 막음
         while (true)
@@ -195,10 +197,11 @@ public class Board : UITable
                 {
                     foreach(Element b in listCombo)
                     {
-                        StartCoroutine(b.Dead(0.5f));
+                        StartCoroutine(b.Dead(0.8f));
                     }
-
-                    yield return new WaitForSeconds(0.5f);        
+                    //AudioSource.PlayClipAtPoint(GameCore.instance.countSound[GameCore.instance.combo], transform.position);
+                    GameCore.instance.unityChanPointer.ComboReaction(++GameCore.instance.combo);
+                    yield return new WaitForSeconds(0.8f);        
                 }
                 a.chainClear();
             }
@@ -224,8 +227,9 @@ public class Board : UITable
             yield return new WaitForSeconds(0.3f);
             children.Sort(compareCoord);
             listDestroy.Clear();   
- 
         }
+        GameCore.instance.uiCamera.useMouse = true;
+        GameCore.instance.uiCamera.useTouch = true;
     }
     public Coroutine DectectDestoryElement()
     {

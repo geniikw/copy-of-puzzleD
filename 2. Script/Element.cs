@@ -46,7 +46,8 @@ public class Element : UIDragDropItem{
     }
     protected override void OnDragDropStart()
     {
-        
+       transform.position = UICamera.currentCamera.ScreenToWorldPoint(Input.mousePosition);
+  
         GameCore.instance.getTouchMessage();
         base.OnDragDropStart();
         //리포지션을 하지 않는다.
@@ -58,40 +59,30 @@ public class Element : UIDragDropItem{
         //board.IgnoreReposition.Remove(this);
         base.OnDragDropRelease(surface);
         //역시 리포지션을 하지 않는다.
-        board.bReposition = false;
-        StartCoroutine(turnEndSeq());   
-      
+        board.bReposition = false;    
+        //제자리로 돌아감
+        StartCoroutine(MoveToMyPosition(0.1f));
+
+        StartCoroutine(turnEndSeq());     
     }
     IEnumerator turnEndSeq()
     {
-        //터치를 막음
-        GameCore.instance.uiCamera.useMouse = false;
-        GameCore.instance.uiCamera.useTouch = false;
-        //제자리로 돌아감
-        StartCoroutine(MoveToMyPosition(0.1f));
-        //board가 다끝나면 알려줌
-        yield return board.DectectDestoryElement();
-        //터치를 품
-        GameCore.instance.uiCamera.useMouse = true;
-        GameCore.instance.uiCamera.useTouch = true;
+        yield return board.DectectDestoryElement();       
     }
     
     bool key = false;
     void OnDragOver(GameObject col)
     {       
         if (col != gameObject && !key)
-        {
+        {          
+            key = true;
+            CopyPDTool.SwapCoord(col.GetComponent<Element>(), this);
+            AudioSource.PlayClipAtPoint(GameCore.instance.swapSound,transform.position);
             int first = CopyPDTool.CoordToIndex(coord);
             int second = CopyPDTool.CoordToIndex(col.GetComponent<Element>().coord);
-            key = true;               
-            
-            Vector2 temp = col.GetComponent<Element>().coord;
-            col.GetComponent<Element>().coord = coord;
-            coord = temp;
-         
             board.children.Swap(first, second);    
-            StartCoroutine(CircleMoveDrop(coordPosition, 0.08f));  //이렇게 사용함.
-            //board.Reposition();   
+
+            StartCoroutine(CircleMoveDrop(coordPosition, 0.08f));   
         }   
     }
 
@@ -201,19 +192,32 @@ public class Element : UIDragDropItem{
     }
     
     public IEnumerator Dead(float time)
-    {       
+    {
+        GameCore.instance.requestDeathEffect(this);
         yield return StartCoroutine(SetAlphaValueForSecond(0f, time));
-        GameCore.instance.score += 10;
+        GameCore.instance.score += (int)(10f * (GameCore.instance.combo/10f + 1f));
+       
         Vector3 temp = transform.localPosition;
         temp.y = GameCore.instance.deadLine.transform.localPosition.y - drop * board.uiSprite.height/5;
         transform.localPosition = temp;       
         coord = new Vector2(coord.x, drop);
+        gameObject.SetActive(false);
+
         drop = 0;
     }  
     public IEnumerator Alive(float time)
     {
         bComboFlag = false;
         SetRandomColor();//속성을 바꾼다.
+        gameObject.SetActive(true);
+       
+        Transform de = transform.GetChild(0);
+
+        if(de != null)
+        {
+            de.GetComponent<DeathEffect>().Color = uiSprite.color;
+        }
+
         yield return StartCoroutine(SetAlphaValueForSecond(1f, time));     
     }         
     public void dropCoord()
@@ -241,6 +245,5 @@ public class Element : UIDragDropItem{
         {
             chain[index++] = board.getElement(leftCoord);
         }
-    }
-     
+    }  
 }
